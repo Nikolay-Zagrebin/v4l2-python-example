@@ -6,7 +6,7 @@ import mmap
 import numpy as np
 import cv2
 
-NUM_BUFFERS = 1
+NUM_BUFFERS = 1000
 
 #   1. Initializing the device
 fd = open('/dev/video0', 'rb+', buffering=0)
@@ -42,10 +42,11 @@ buf_type = v4l2.v4l2_buf_type(v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE)
 ioctl(fd, v4l2.VIDIOC_STREAMON, buf_type)
 
 #   5. Capture image
-img = None
-f = 0
-while img is None:
-    buf = buffers[f % NUM_BUFFERS]
+fourcc = cv2.VideoWriter_fourcc(*'XVID')
+vidWrite = cv2.VideoWriter('test_video.avi', fourcc, 20, (356,292))
+
+for x in range(req.count):
+    buf = buffers[x]
     ioctl(fd, v4l2.VIDIOC_DQBUF, buf)
     video_buffer = buffers[buf.index].buffer
     data = video_buffer.read(buf.bytesused)
@@ -55,6 +56,8 @@ while img is None:
         bayer8_image = np.frombuffer(data, dtype=np.uint8).reshape((292,356))
         img = cv2.cvtColor(bayer8_image, cv2.COLOR_BayerGR2RGB)
 
+        vidWrite.write(img)
+
         #test1 = cv2.resize(img, None, fx=10, fy=10, interpolation=cv2.INTER_CUBIC)
         #cv2.imwrite('test1.jpg', test1)
 
@@ -63,8 +66,20 @@ while img is None:
         print("Invalid image:", e)
 
     ioctl(fd, v4l2.VIDIOC_QBUF, buf)
-    f += 1
 
 #   6. Tell the camera to stop streaming
 ioctl(fd, v4l2.VIDIOC_STREAMOFF, buf_type)
 fd.close()
+vidWrite.release()
+
+#frame = np.frombuffer(mm, dtype=np.uint8).reshape(fmt.fmt.pix.height, fmt.fmt.pix.width, 2)
+#frame = cv2.cvtColor(frame, cv2.COLOR_YUV2GRAY_YUY2)
+
+#data = mm.read(buf.bytesused)
+#raw_data = open("frame.bin", "wb")
+#raw_data.write(data)
+
+
+
+#image = cv2.imdecode(np.fromstring(data, dtype=np.uint8), cv2.IMREAD_COLOR)
+#cv2.imwrite("image.jpg", image)
