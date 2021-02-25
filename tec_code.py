@@ -6,7 +6,7 @@ import mmap
 import numpy as np
 import cv2
 
-NUM_BUFFERS = 10
+NUM_BUFFERS = 1
 
 #   1. Initializing the device
 fd = open('/dev/video0', 'rb+', buffering=0)
@@ -45,34 +45,26 @@ ioctl(fd, v4l2.VIDIOC_STREAMON, buf_type)
 img = None
 f = 0
 while img is None:
-    print("Grabbing Frame...")
     buf = buffers[f % NUM_BUFFERS]
     ioctl(fd, v4l2.VIDIOC_DQBUF, buf)
     video_buffer = buffers[buf.index].buffer
     data = video_buffer.read(buf.bytesused)
     video_buffer.seek(0)
 
-    print("Verifing Image..")
     try:
         bayer8_image = np.frombuffer(data, dtype=np.uint8).reshape((292,356))
         img = cv2.cvtColor(bayer8_image, cv2.COLOR_BayerGR2RGB)
-        cv2.imwrite('test1.jpg', img)
+
+        #test1 = cv2.resize(img, None, fx=10, fy=10, interpolation=cv2.INTER_CUBIC)
+        #cv2.imwrite('test1.jpg', test1)
+
+        cv2.imwrite('test_GR2RGB.jpg', img)
     except Exception as e:
         print("Invalid image:", e)
 
     ioctl(fd, v4l2.VIDIOC_QBUF, buf)
     f += 1
 
-
-
-#frame = np.frombuffer(mm, dtype=np.uint8).reshape(fmt.fmt.pix.height, fmt.fmt.pix.width, 2)
-#frame = cv2.cvtColor(frame, cv2.COLOR_YUV2GRAY_YUY2)
-
-#data = mm.read(buf.bytesused)
-#raw_data = open("frame.bin", "wb")
-#raw_data.write(data)
-
-
-
-#image = cv2.imdecode(np.fromstring(data, dtype=np.uint8), cv2.IMREAD_COLOR)
-#cv2.imwrite("image.jpg", image)
+#   6. Tell the camera to stop streaming
+ioctl(fd, v4l2.VIDIOC_STREAMOFF, buf_type)
+fd.close()
