@@ -42,8 +42,8 @@ buf_type = v4l2.v4l2_buf_type(v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE)
 ioctl(fd, v4l2.VIDIOC_STREAMON, buf_type)
 
 #   5. Capture image
-fourcc = cv2.VideoWriter_fourcc(*'XVID')
-vidWrite = cv2.VideoWriter('test_video.avi', fourcc, 20, (356,292))
+#fourcc = cv2.VideoWriter_fourcc(*'XVID')
+#vidWrite = cv2.VideoWriter('test_video.avi', fourcc, 20, (356,292))
 
 for x in range(req.count):
     buf = buffers[x]
@@ -55,13 +55,13 @@ for x in range(req.count):
     try:
         bayer8_image = np.frombuffer(data, dtype=np.uint8).reshape((292,356))
         img = cv2.cvtColor(bayer8_image, cv2.COLOR_BayerGR2RGB)
+        cv2.imwrite('test_GR2RGB.jpg', img)
 
-        vidWrite.write(img)
+        #vidWrite.write(img)
 
         #test1 = cv2.resize(img, None, fx=10, fy=10, interpolation=cv2.INTER_CUBIC)
         #cv2.imwrite('test1.jpg', test1)
 
-        cv2.imwrite('test_GR2RGB.jpg', img)
     except Exception as e:
         print("Invalid image:", e)
 
@@ -70,16 +70,11 @@ for x in range(req.count):
 #   6. Tell the camera to stop streaming
 ioctl(fd, v4l2.VIDIOC_STREAMOFF, buf_type)
 fd.close()
-vidWrite.release()
-
-#frame = np.frombuffer(mm, dtype=np.uint8).reshape(fmt.fmt.pix.height, fmt.fmt.pix.width, 2)
-#frame = cv2.cvtColor(frame, cv2.COLOR_YUV2GRAY_YUY2)
+#vidWrite.release()
 
 #data = mm.read(buf.bytesused)
 #raw_data = open("frame.bin", "wb")
 #raw_data.write(data)
-
-
 
 #image = cv2.imdecode(np.fromstring(data, dtype=np.uint8), cv2.IMREAD_COLOR)
 #cv2.imwrite("image.jpg", image)
